@@ -43,7 +43,7 @@ public class HomeActivity extends AppCompatActivity {
         final ArrayList<User> arrayOfUsers = new ArrayList<User>();
         // Create the adapter to convert the array to views
 
-        arrayOfUsers.add(new User("Alin"));
+        arrayOfUsers.add(new User("Andrei"));
         arrayOfUsers.add(new User("Adriana"));
         arrayOfUsers.add(new User("Gica"));
         arrayOfUsers.add(new User("Laura"));

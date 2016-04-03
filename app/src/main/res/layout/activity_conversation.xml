@@ -10,10 +10,31 @@
     tools:context="com.example.alin.lechat.ConversationActivity">
 
     <ListView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/messageListView"
+        android:layout_above="@+id/messageSendButton"
+        android:transcriptMode="alwaysScroll"
+        android:stackFromBottom="true"/>
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/messageEditText"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:hint="@string/message_hint"
+        android:layout_toLeftOf="@+id/messageSendButton"
+        android:layout_toStartOf="@+id/messageSendButton" />
+
+    <Button
+        style="?android:attr/buttonStyleSmall"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/listView2"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true" />
+        android:text=">"
+        android:id="@+id/messageSendButton"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true" />
 </RelativeLayout>
