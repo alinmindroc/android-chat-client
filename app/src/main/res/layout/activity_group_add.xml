@@ -13,19 +13,34 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:inputType="textPersonName"
-        android:text="Name"
         android:ems="10"
         android:id="@+id/messageEditText"
         android:layout_alignParentTop="true"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true" />
+        android:layout_alignParentStart="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:hint="Group Name"/>
 
-    <ListView
+    <Button
+        style="?android:attr/buttonStyleSmall"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/listView"
+        android:text="OK"
+        android:id="@+id/button2"
+        android:layout_below="@+id/multiAutoCompleteTextViewGroups"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <MultiAutoCompleteTextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/multiAutoCompleteTextViewGroups"
         android:layout_below="@+id/messageEditText"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true" />
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignRight="@+id/messageEditText"
+        android:layout_alignEnd="@+id/messageEditText"
+        android:hint="Friends (separate by comma)"/>
 
 </RelativeLayout>
