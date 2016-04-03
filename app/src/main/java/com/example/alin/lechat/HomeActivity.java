@@ -1,6 +1,7 @@
 package com.example.alin.lechat;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -21,10 +22,18 @@ public class HomeActivity extends AppCompatActivity {
     private final String ADD_GROUP_LIST_ENTRY = "+ Add Group";
     private final String ADD_COLOR_HEX = "#2C90D8";
 
+    public static final String EXTRA_FRIEND_NAME = "friend_name";
+    public static final String EXTRA_GROUP_NAME = "group_name";
+    public static final String EXTRA_CONVERSATION_TYPE = "conversation_type";
+    public static final String CONVERSATION_TYPE_PRIVATE = "private_conversation";
+    public static final String CONVERSATION_TYPE_GROUP = "group_conversation";
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
+        getSupportActionBar().hide();
 
         ListView friendList = (ListView) findViewById(R.id.friendList);
         ListView groupList = (ListView) findViewById(R.id.groupList);
@@ -46,7 +55,7 @@ public class HomeActivity extends AppCompatActivity {
 
 
         //add groups
-        ArrayList<Group> arrayOfGroups = new ArrayList<Group>();
+        final ArrayList<Group> arrayOfGroups = new ArrayList<Group>();
         // Create the adapter to convert the array to views
 
         arrayOfGroups.add(new Group("Group 1"));
@@ -72,8 +81,15 @@ public class HomeActivity extends AppCompatActivity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 if(position == 0){
                     //start add friend activity
+                    Intent intent = new Intent(view.getContext(), FriendAddActivity.class);
+                    startActivity(intent);
                 } else {
                     //go to friend conversation
+                    Intent intent = new Intent(view.getContext(), ConversationActivity.class);
+
+                    intent.putExtra(EXTRA_CONVERSATION_TYPE, CONVERSATION_TYPE_PRIVATE);
+                    intent.putExtra(EXTRA_FRIEND_NAME, arrayOfUsers.get(position).name);
+                    startActivity(intent);
                 }
             }
         });
@@ -83,8 +99,15 @@ public class HomeActivity extends AppCompatActivity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 if(position == 0){
                     //start add group activity
+                    Intent intent = new Intent(view.getContext(), GroupAddActivity.class);
+                    startActivity(intent);
                 } else {
                     //go to group conversation
+                    Intent intent = new Intent(view.getContext(), ConversationActivity.class);
+
+                    intent.putExtra(EXTRA_CONVERSATION_TYPE, CONVERSATION_TYPE_GROUP);
+                    intent.putExtra(EXTRA_GROUP_NAME, arrayOfGroups.get(position).name);
+                    startActivity(intent);
                 }
             }
         });

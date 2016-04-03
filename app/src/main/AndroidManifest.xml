@@ -7,17 +7,19 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
-        <activity android:name=".LoginActivity">
+        android:theme="@style/AppTheme"
+        android:largeHeap="true">
+        <activity android:name=".LoginActivity" android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".HomeActivity" />
-        <activity android:name=".FriendAddActivity" />
-        <activity android:name=".GroupAddActivity" />
+        <activity android:name=".HomeActivity" android:screenOrientation="portrait"/>
+        <activity android:name=".FriendAddActivity" android:screenOrientation="portrait"/>
+        <activity android:name=".GroupAddActivity" android:screenOrientation="portrait"/>
+        <activity android:name=".ConversationActivity" android:screenOrientation="portrait"/>
     </application>
 
 </manifest>
