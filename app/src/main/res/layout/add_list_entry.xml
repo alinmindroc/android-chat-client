@@ -10,9 +10,7 @@
         android:text="Large Text"
         android:textSize="40px"
         android:layout_centerVertical="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_marginLeft="19dp"
-        android:layout_marginStart="19dp">
+        android:layout_centerHorizontal="true">
     </TextView>
+
 </RelativeLayout>
