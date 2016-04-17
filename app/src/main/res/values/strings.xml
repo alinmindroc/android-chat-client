@@ -2,4 +2,5 @@
     <string name="app_name">LeChat</string>
     <string name="facebook_app_id">1547407952226378</string>
     <string name="message_hint">Type a message...</string>
+    <string name="action_settings">Upload a file</string>
 </resources>

@@ -14,6 +14,16 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.facebook.AccessToken;
+import com.facebook.GraphRequest;
+import com.facebook.GraphRequestAsyncTask;
+import com.facebook.GraphResponse;
+import com.facebook.HttpMethod;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 
 public class HomeActivity extends AppCompatActivity {
@@ -28,30 +38,70 @@ public class HomeActivity extends AppCompatActivity {
     public static final String CONVERSATION_TYPE_PRIVATE = "private_conversation";
     public static final String CONVERSATION_TYPE_GROUP = "group_conversation";
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
         getSupportActionBar().hide();
 
-        ListView friendList = (ListView) findViewById(R.id.friendList);
+        final ListView friendList = (ListView) findViewById(R.id.friendList);
         ListView groupList = (ListView) findViewById(R.id.groupList);
 
+        Intent intent = getIntent();
+        String currentUserId = intent.getStringExtra(LoginActivity.EXTRA_CURRENT_USER_ID);
+
+        GraphRequestAsyncTask graphRequestAsyncTask = new GraphRequest(
+                AccessToken.getCurrentAccessToken(),
+                "/me/friends",
+                null,
+                HttpMethod.GET,
+                new GraphRequest.Callback() {
+                    public void onCompleted(GraphResponse response) {
+                        try {
+                            JSONArray friends = response.getJSONObject().getJSONArray("data");
+
+                            final ArrayList<User> arrayOfUsers = new ArrayList();
+                            // Create the adapter to convert the array to views
+
+                            UsersAdapter friendsAdapter = new UsersAdapter(HomeActivity.this, arrayOfUsers);
+                            // Attach the adapter to a ListView
+                            friendList.setAdapter(friendsAdapter);
+                            arrayOfUsers.add(0, new User(ADD_FRIEND_LIST_ENTRY));
+
+                            for(int i=0; i<friends.length(); i++) {
+                                arrayOfUsers.add(new User(friends.getJSONObject(i).getString("name")));
+                            }
+
+                            //add logic for opening conversations
+                            friendList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                                @Override
+                                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                                    if (position == 0) {
+                                        //start add friend activity
+                                        Intent intent = new Intent(view.getContext(), FriendAddActivity.class);
+                                        startActivity(intent);
+                                    } else {
+                                        //go to friend conversation
+                                        Intent intent = new Intent(view.getContext(), ConversationActivity.class);
+
+                                        intent.putExtra(EXTRA_CONVERSATION_TYPE, CONVERSATION_TYPE_PRIVATE);
+                                        intent.putExtra(EXTRA_FRIEND_NAME, arrayOfUsers.get(position).name);
+                                        startActivity(intent);
+                                    }
+                                }
+                            });
+
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }).executeAsync();
+
+
+
+        Log.e("current user id", currentUserId);
+
         //add users
-
-        final ArrayList<User> arrayOfUsers = new ArrayList<User>();
-        // Create the adapter to convert the array to views
-
-        arrayOfUsers.add(new User("Andrei"));
-        arrayOfUsers.add(new User("Adriana"));
-        arrayOfUsers.add(new User("Gica"));
-        arrayOfUsers.add(new User("Laura"));
-        arrayOfUsers.add(new User("Cristi"));
-
-        UsersAdapter friendsAdapter = new UsersAdapter(this, arrayOfUsers);
-        // Attach the adapter to a ListView
-        friendList.setAdapter(friendsAdapter);
 
 
         //add groups
@@ -71,33 +121,14 @@ public class HomeActivity extends AppCompatActivity {
 
 
         //add groups and friends
-        arrayOfUsers.add(0, new User(ADD_FRIEND_LIST_ENTRY));
         arrayOfGroups.add(0, new Group(ADD_GROUP_LIST_ENTRY));
 
 
-        //add logic for opening conversations
-        friendList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if(position == 0){
-                    //start add friend activity
-                    Intent intent = new Intent(view.getContext(), FriendAddActivity.class);
-                    startActivity(intent);
-                } else {
-                    //go to friend conversation
-                    Intent intent = new Intent(view.getContext(), ConversationActivity.class);
-
-                    intent.putExtra(EXTRA_CONVERSATION_TYPE, CONVERSATION_TYPE_PRIVATE);
-                    intent.putExtra(EXTRA_FRIEND_NAME, arrayOfUsers.get(position).name);
-                    startActivity(intent);
-                }
-            }
-        });
 
         groupList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if(position == 0){
+                if (position == 0) {
                     //start add group activity
                     Intent intent = new Intent(view.getContext(), GroupAddActivity.class);
                     startActivity(intent);
@@ -111,6 +142,28 @@ public class HomeActivity extends AppCompatActivity {
                 }
             }
         });
+
+//        GraphRequest request = GraphRequest.newMeRequest(
+//                AccessToken.getCurrentAccessToken(),
+//                new GraphRequest.GraphJSONObjectCallback() {
+//                    @Override
+//                    public void onCompleted(
+//                            JSONObject object,
+//                            GraphResponse response) {
+//                        try {
+//                            String name = object.getString("name");
+//                            Log.e("name", object.toString());
+//                        } catch (JSONException e) {
+//                            e.printStackTrace();
+//                        }
+//                    }
+//                });
+//
+//        Bundle parameters = new Bundle();
+//        parameters.putString("fields", "id,name");
+//        request.setParameters(parameters);
+//        request.executeAsync();
+
     }
 
     class User {
