@@ -3,13 +3,15 @@ package com.example.alin.lechat;
 class Message {
     public String userName;
     public String messageText;
+    public String senderName;
 
-    public Message(String userName, String messageText) {
+    public Message(String senderName, String userName, String messageText) {
         this.userName = userName;
         this.messageText = messageText;
+        this.senderName = senderName;
     }
 
     public boolean isCurrentUser(){
-        return userName.equals("Alin");
+        return userName.equals(senderName);
     }
 }

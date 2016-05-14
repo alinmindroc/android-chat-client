@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -29,12 +30,33 @@ import com.facebook.HttpMethod;
 
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.List;
 
 public class ConversationActivity extends AppCompatActivity {
+
+    String currentUserName;
+    String conversationPartnerId;
+    String currentUserId;
+
+    // Create the Handler object (on the main thread by default)
+    final Handler handler = new Handler();
+    // Define the code block to be executed
+    Runnable runnableCode = new Runnable() {
+        @Override
+        public void run() {
+            // Do something here on the main thread
+            Log.d("Handlers", "Called on main thread");
+            new HttpRequestGetMessages().execute(currentUserId, conversationPartnerId);
+            // Repeat this the same runnable code block again another 2 seconds
+            handler.postDelayed(runnableCode, 2000);
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,11 +65,11 @@ public class ConversationActivity extends AppCompatActivity {
 
         Intent intent = getIntent();
         String conversationType = intent.getStringExtra(HomeActivity.EXTRA_CONVERSATION_TYPE);
-        String conversationPartner = intent.getStringExtra(HomeActivity.EXTRA_FRIEND_NAME);
-        if(conversationPartner == null) {
-            //we are in a group conversation
-            conversationPartner = "Anon";
-        }
+        final String conversationPartnerName = intent.getStringExtra(HomeActivity.EXTRA_FRIEND_NAME);
+        conversationPartnerId = intent.getStringExtra(HomeActivity.EXTRA_FRIEND_ID);
+
+        currentUserName = intent.getStringExtra(LoginActivity.EXTRA_CURRENT_USER_NAME);
+        currentUserId = intent.getStringExtra(LoginActivity.EXTRA_CURRENT_USER_ID);
 
         if(conversationType.equals(HomeActivity.CONVERSATION_TYPE_PRIVATE)){
             getSupportActionBar().setTitle(intent.getStringExtra(HomeActivity.EXTRA_FRIEND_NAME));
@@ -56,52 +78,38 @@ public class ConversationActivity extends AppCompatActivity {
         }
 
         final ArrayList<Message> arrayOfMessages = new ArrayList<Message>();
-//        arrayOfMessages.add(new Message(conversationPartner, "hi"));
-//        arrayOfMessages.add(new Message(conversationPartner, "how are you?"));
 
         final ListView messageList = (ListView) findViewById(R.id.messageListView);
         final MessageAdapter messageAdapter = new MessageAdapter(this, arrayOfMessages);
 
         messageList.setAdapter(messageAdapter);
 
-        final EditText messageToSendView = (EditText) findViewById(R.id.messageEditText);
+        final EditText messageInput = (EditText) findViewById(R.id.messageEditText);
 
         Button sendButton = (Button) findViewById(R.id.messageSendButton);
         sendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String messageToSend = messageToSendView.getText().toString();
-                if(messageToSend.length() == 0){
+                String content = messageInput.getText().toString();
+                if (content.length() == 0) {
                     return;
                 }
 
-                new HttpRequestTask().execute();
+                //create a new message object and send it to the server
+                JSONMessage jsonMessage = new JSONMessage(content, new Date(), currentUserId, conversationPartnerId, currentUserName, conversationPartnerName);
 
-                GraphRequestAsyncTask graphRequestAsyncTask = new GraphRequest(
-                        AccessToken.getCurrentAccessToken(),
-                        "/me/friends",
-                        null,
-                        HttpMethod.GET,
-                        new GraphRequest.Callback() {
-                            public void onCompleted(GraphResponse response) {
-                                Log.e("friend list", response.toString());
-//                                Intent intent = new Intent(MainActivity.this,FriendsList.class);
-//                                try {
-//                                    JSONArray rawName = response.getJSONObject().getJSONArray("data");
-//                                    intent.putExtra("jsondata", rawName.toString());
-//                                    startActivity(intent);
-//                                } catch (JSONException e) {
-//                                    e.printStackTrace();
-//                                }
-                            }
-                        }).executeAsync();
+                new HttpRequestSendMessage().execute(jsonMessage);
 
-
-                arrayOfMessages.add(new Message("Alin", messageToSend));
-                messageAdapter.notifyDataSetChanged();
-                messageToSendView.setText("");
+//                arrayOfMessages.add(new Message(currentUserName, content));
+//                messageAdapter.notifyDataSetChanged();
+                messageInput.setText("");
             }
         });
+
+        // Start the initial runnable task by posting through the handler
+        handler.post(runnableCode);
+
+//        new HttpRequestGetMessages().execute(currentUserId, conversationPartnerId);
     }
 
     private final int FILE_SELECT_CODE = 0;
@@ -239,17 +247,15 @@ public class ConversationActivity extends AppCompatActivity {
     }
 
 
-    private class HttpRequestTask extends AsyncTask<Void, Void, JSONMessage> {
+    private class HttpRequestSendMessage extends AsyncTask<JSONMessage, Void, JSONMessage> {
         @Override
-        protected JSONMessage doInBackground(Void... params) {
+        protected JSONMessage doInBackground(JSONMessage... params) {
             try {
                 final String url = "http://188.247.227.127:8080/message";
                 RestTemplate restTemplate = new RestTemplate();
                 restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
 
-                JSONMessage jsonMessage = new JSONMessage("hello", new Date(), "1", "2", "alin", "asd");
-                return restTemplate.postForObject(url, jsonMessage, JSONMessage.class);
-//                return restTemplate.getForObject(url, JSONMessage.class);
+                return restTemplate.postForObject(url, params[0], JSONMessage.class);
             } catch (Exception e) {
                 Log.e("MainActivity", e.getMessage(), e);
             }
@@ -263,10 +269,53 @@ public class ConversationActivity extends AppCompatActivity {
                 return;
             }
             Log.e("asd", greeting.toString());
-//            TextView greetingIdText = (TextView) findViewById(R.id.id_value);
-//            TextView greetingContentText = (TextView) findViewById(R.id.content_value);
-//            greetingIdText.setText(greeting.getId());
-//            greetingContentText.setText(greeting.getContent());
         }
     }
+
+    private class HttpRequestGetMessages extends AsyncTask<String, Void, List<LinkedHashMap>> {
+        @Override
+        protected List<LinkedHashMap> doInBackground(String... params) {
+            try {
+                final String url = "http://188.247.227.127:8080";
+
+                String targetUrl= UriComponentsBuilder.fromUriString(url)
+                        .path("/message")
+                        .queryParam("receiverId", params[0])
+                        .queryParam("senderId", params[1])
+                        .build()
+                        .toUri()
+                        .toString();
+
+                RestTemplate restTemplate = new RestTemplate();
+                restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
+
+                return (List<LinkedHashMap>) restTemplate.getForObject(targetUrl, List.class);
+            } catch (Exception e) {
+                Log.e("MainActivity", e.getMessage(), e);
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(List<LinkedHashMap> messages) {
+            if(messages == null){
+                return;
+            }
+            Log.e("asd", messages.toString());
+            ArrayList<Message> arrayOfMessages = new ArrayList<Message>();
+
+            ListView messageList = (ListView) findViewById(R.id.messageListView);
+            MessageAdapter messageAdapter = new MessageAdapter(ConversationActivity.this, arrayOfMessages);
+
+            messageList.setAdapter(messageAdapter);
+
+            for(LinkedHashMap m: messages){
+                arrayOfMessages.add(new Message(currentUserName, m.get("senderName").toString(), m.get("text").toString()));
+            }
+
+            messageAdapter.notifyDataSetChanged();
+        }
+    }
+
 }

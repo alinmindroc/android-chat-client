@@ -33,6 +33,8 @@ public class HomeActivity extends AppCompatActivity {
     private final String ADD_COLOR_HEX = "#2C90D8";
 
     public static final String EXTRA_FRIEND_NAME = "friend_name";
+    public static final String EXTRA_FRIEND_ID = "friend_ID";
+
     public static final String EXTRA_GROUP_NAME = "group_name";
     public static final String EXTRA_CONVERSATION_TYPE = "conversation_type";
     public static final String CONVERSATION_TYPE_PRIVATE = "private_conversation";
@@ -48,7 +50,8 @@ public class HomeActivity extends AppCompatActivity {
         ListView groupList = (ListView) findViewById(R.id.groupList);
 
         Intent intent = getIntent();
-        String currentUserId = intent.getStringExtra(LoginActivity.EXTRA_CURRENT_USER_ID);
+        final String currentUserId = intent.getStringExtra(LoginActivity.EXTRA_CURRENT_USER_ID);
+        final String currentUserName = intent.getStringExtra(LoginActivity.EXTRA_CURRENT_USER_NAME);
 
         GraphRequestAsyncTask graphRequestAsyncTask = new GraphRequest(
                 AccessToken.getCurrentAccessToken(),
@@ -58,7 +61,7 @@ public class HomeActivity extends AppCompatActivity {
                 new GraphRequest.Callback() {
                     public void onCompleted(GraphResponse response) {
                         try {
-                            JSONArray friends = response.getJSONObject().getJSONArray("data");
+                            final JSONArray friends = response.getJSONObject().getJSONArray("data");
 
                             final ArrayList<User> arrayOfUsers = new ArrayList();
                             // Create the adapter to convert the array to views
@@ -85,7 +88,14 @@ public class HomeActivity extends AppCompatActivity {
                                         Intent intent = new Intent(view.getContext(), ConversationActivity.class);
 
                                         intent.putExtra(EXTRA_CONVERSATION_TYPE, CONVERSATION_TYPE_PRIVATE);
-                                        intent.putExtra(EXTRA_FRIEND_NAME, arrayOfUsers.get(position).name);
+                                        try {
+                                            intent.putExtra(EXTRA_FRIEND_ID, friends.getJSONObject(position - 1).getString("id"));
+                                            intent.putExtra(EXTRA_FRIEND_NAME, friends.getJSONObject(position - 1).getString("name"));
+                                            intent.putExtra(LoginActivity.EXTRA_CURRENT_USER_NAME, currentUserName);
+                                            intent.putExtra(LoginActivity.EXTRA_CURRENT_USER_ID, currentUserId);
+                                        } catch (JSONException e) {
+                                            e.printStackTrace();
+                                        }
                                         startActivity(intent);
                                     }
                                 }

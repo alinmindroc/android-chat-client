@@ -30,6 +30,7 @@ import java.util.Arrays;
 public class LoginActivity extends AppCompatActivity {
 
     public static final String EXTRA_CURRENT_USER_ID = "user_id";
+    public static final String EXTRA_CURRENT_USER_NAME = "user_name";
 
     private CallbackManager callbackManager;
 
@@ -59,12 +60,11 @@ public class LoginActivity extends AppCompatActivity {
                         loginResult.getAccessToken(),
                         new GraphRequest.GraphJSONObjectCallback() {
                             @Override
-                            public void onCompleted(
-                                    JSONObject object,
-                                    GraphResponse response) {
+                            public void onCompleted(JSONObject object, GraphResponse response) {
                                 try {
                                     final Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
                                     intent.putExtra(EXTRA_CURRENT_USER_ID, object.getString("id"));
+                                    intent.putExtra(EXTRA_CURRENT_USER_NAME, object.getString("name"));
                                     startActivity(intent);
                                 } catch (JSONException e) {
                                     e.printStackTrace();
@@ -73,7 +73,7 @@ public class LoginActivity extends AppCompatActivity {
                         });
 
                 Bundle parameters = new Bundle();
-                parameters.putString("fields", "id");
+                parameters.putString("fields", "id,name");
                 request.setParameters(parameters);
                 request.executeAsync();
             }
