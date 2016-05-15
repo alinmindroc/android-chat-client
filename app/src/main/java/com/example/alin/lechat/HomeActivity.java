@@ -40,13 +40,18 @@ public class HomeActivity extends AppCompatActivity {
     private final String ADD_GROUP_LIST_ENTRY = "+ Add Group";
     private final String ADD_COLOR_HEX = "#2C90D8";
 
-    public static final String EXTRA_FRIEND_NAME = "friend_name";
     public static final String EXTRA_FRIEND_ID = "friend_ID";
+    public static final String EXTRA_FRIEND_NAME = "friend_name";
 
-    public static final String EXTRA_GROUP_NAME = "group_name";
     public static final String EXTRA_CONVERSATION_TYPE = "conversation_type";
     public static final String CONVERSATION_TYPE_PRIVATE = "private_conversation";
     public static final String CONVERSATION_TYPE_GROUP = "group_conversation";
+
+    public static final String EXTRA_GROUP_ID = "group_id";
+    public static final String EXTRA_GROUP_NAME = "group_name";
+
+    String currentUserId;
+    String currentUserName;
 
     @Override
     protected void onStart() {
@@ -65,8 +70,8 @@ public class HomeActivity extends AppCompatActivity {
         final ListView friendList = (ListView) findViewById(R.id.friendList);
 
         Intent intent = getIntent();
-        final String currentUserId = intent.getStringExtra(LoginActivity.EXTRA_CURRENT_USER_ID);
-        final String currentUserName = intent.getStringExtra(LoginActivity.EXTRA_CURRENT_USER_NAME);
+        currentUserId = intent.getStringExtra(LoginActivity.EXTRA_CURRENT_USER_ID);
+        currentUserName = intent.getStringExtra(LoginActivity.EXTRA_CURRENT_USER_NAME);
 
         //set friends list
         GraphRequestAsyncTask graphRequestAsyncTask = new GraphRequest(
@@ -169,9 +174,11 @@ public class HomeActivity extends AppCompatActivity {
 
     class Group {
         public String name;
+        public String id;
 
-        public Group(String name) {
+        public Group(String id, String name) {
             this.name = name;
+            this.id = id;
         }
     }
 
@@ -256,7 +263,7 @@ public class HomeActivity extends AppCompatActivity {
             // Create the adapter to convert the array to views
 
             for(LinkedHashMap g : groups){
-                arrayOfGroups.add(new Group(g.get("name").toString()));
+                arrayOfGroups.add(new Group(g.get("id").toString(), g.get("name").toString()));
             }
 
             GroupsAdapter groupsAdapter = new GroupsAdapter(HomeActivity.this, arrayOfGroups);
@@ -264,7 +271,7 @@ public class HomeActivity extends AppCompatActivity {
             groupList.setAdapter(groupsAdapter);
 
             //add groups and friends
-            arrayOfGroups.add(0, new Group(ADD_GROUP_LIST_ENTRY));
+            arrayOfGroups.add(0, new Group("-1", ADD_GROUP_LIST_ENTRY));
 
             groupList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
@@ -281,6 +288,10 @@ public class HomeActivity extends AppCompatActivity {
 
                         intent.putExtra(EXTRA_CONVERSATION_TYPE, CONVERSATION_TYPE_GROUP);
                         intent.putExtra(EXTRA_GROUP_NAME, arrayOfGroups.get(position).name);
+                        intent.putExtra(EXTRA_GROUP_ID, arrayOfGroups.get(position).id);
+                        intent.putExtra(LoginActivity.EXTRA_CURRENT_USER_NAME, currentUserName);
+                        intent.putExtra(LoginActivity.EXTRA_CURRENT_USER_ID, currentUserId);
+
                         startActivity(intent);
                     }
                 }

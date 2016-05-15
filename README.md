@@ -9,3 +9,4 @@ Build instructions:
 
 todo: in group add, set custom listener for friend id instead of name
 de pus adresa serverului + numele stringurilor de intenturi in constants
+de scos campul date din mesaje

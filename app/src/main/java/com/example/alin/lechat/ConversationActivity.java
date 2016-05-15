@@ -31,25 +31,43 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 
+import JSON_objects.JSONGroupMessage;
 import JSON_objects.JSONMessage;
 
 public class ConversationActivity extends AppCompatActivity {
 
-    String currentUserName;
-    String conversationPartnerId;
     String currentUserId;
+    String currentUserName;
+
+    String conversationPartnerId;
+    String conversationPartnerName;
+
+    String currentGroupId;
+    String currentGroupName;
+
+    String conversationType;
 
     // Create the Handler object (on the main thread by default)
     final Handler handler = new Handler();
-    // Define the code block to be executed
-    Runnable runnableCode = new Runnable() {
+    Runnable runnablePrivateConversation = new Runnable() {
         @Override
         public void run() {
             // Do something here on the main thread
             Log.d("Handlers", "Called on main thread");
             new HttpRequestGetMessages().execute(currentUserId, conversationPartnerId);
             // Repeat this the same runnable code block again another 2 seconds
-            handler.postDelayed(runnableCode, 2000);
+            handler.postDelayed(runnablePrivateConversation, 2000);
+        }
+    };
+
+    Runnable runnableGroupConversation = new Runnable() {
+        @Override
+        public void run() {
+            // Do something here on the main thread
+            Log.d("Handlers", "Called on main thread");
+            new HttpRequestGetGroupMessages().execute(currentGroupId);
+            // Repeat this the same runnable code block again another 2 seconds
+            handler.postDelayed(runnableGroupConversation, 2000);
         }
     };
 
@@ -57,21 +75,36 @@ public class ConversationActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
 
-        // Start the initial runnable task by posting through the handler
         // Don't use the onCreate method, because we want to remove the handler even when the application is paused (minimized)
-        handler.post(runnableCode);
+        if(conversationType.equals(HomeActivity.CONVERSATION_TYPE_PRIVATE)) {
+            handler.post(runnablePrivateConversation);
+        } else if(conversationType.equals(HomeActivity.CONVERSATION_TYPE_GROUP)){
+            handler.post(runnableGroupConversation);
+        }
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        handler.removeCallbacks(runnableCode);
+
+        // Don't use the onCreate method, because we want to remove the handler even when the application is paused (minimized)
+        if(conversationType.equals(HomeActivity.CONVERSATION_TYPE_PRIVATE)) {
+            handler.removeCallbacks(runnablePrivateConversation);
+        } else if(conversationType.equals(HomeActivity.CONVERSATION_TYPE_GROUP)){
+            handler.removeCallbacks(runnableGroupConversation);
+        }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        handler.removeCallbacks(runnableCode);
+
+        // Don't use the onCreate method, because we want to remove the handler even when the application is paused (minimized)
+        if(conversationType.equals(HomeActivity.CONVERSATION_TYPE_PRIVATE)) {
+            handler.removeCallbacks(runnablePrivateConversation);
+        } else if(conversationType.equals(HomeActivity.CONVERSATION_TYPE_GROUP)){
+            handler.removeCallbacks(runnableGroupConversation);
+        }
     }
 
     @Override
@@ -80,17 +113,18 @@ public class ConversationActivity extends AppCompatActivity {
         setContentView(R.layout.activity_conversation);
 
         Intent intent = getIntent();
-        String conversationType = intent.getStringExtra(HomeActivity.EXTRA_CONVERSATION_TYPE);
-        final String conversationPartnerName = intent.getStringExtra(HomeActivity.EXTRA_FRIEND_NAME);
-        conversationPartnerId = intent.getStringExtra(HomeActivity.EXTRA_FRIEND_ID);
-
+        conversationType = intent.getStringExtra(HomeActivity.EXTRA_CONVERSATION_TYPE);
         currentUserName = intent.getStringExtra(LoginActivity.EXTRA_CURRENT_USER_NAME);
         currentUserId = intent.getStringExtra(LoginActivity.EXTRA_CURRENT_USER_ID);
 
         if(conversationType.equals(HomeActivity.CONVERSATION_TYPE_PRIVATE)){
-            getSupportActionBar().setTitle(intent.getStringExtra(HomeActivity.EXTRA_FRIEND_NAME));
+            conversationPartnerName = intent.getStringExtra(HomeActivity.EXTRA_FRIEND_NAME);
+            conversationPartnerId = intent.getStringExtra(HomeActivity.EXTRA_FRIEND_ID);
+            getSupportActionBar().setTitle(conversationPartnerName);
         } else if(conversationType.equals(HomeActivity.CONVERSATION_TYPE_GROUP)){
-            getSupportActionBar().setTitle(intent.getStringExtra(HomeActivity.EXTRA_GROUP_NAME));
+            currentGroupId = intent.getStringExtra(HomeActivity.EXTRA_GROUP_ID);
+            currentGroupName = intent.getStringExtra(HomeActivity.EXTRA_GROUP_NAME);
+            getSupportActionBar().setTitle(currentGroupName);
         }
 
         final ArrayList<Message> arrayOfMessages = new ArrayList<Message>();
@@ -111,13 +145,18 @@ public class ConversationActivity extends AppCompatActivity {
                     return;
                 }
 
-                //create a new message object and send it to the server
-                JSONMessage jsonMessage = new JSONMessage(content, new Date(), currentUserId, conversationPartnerId, currentUserName, conversationPartnerName);
+                if(conversationType.equals(HomeActivity.CONVERSATION_TYPE_PRIVATE)){
+                    //create a new message object and send it to the server
+                    JSONMessage jsonMessage = new JSONMessage(content, new Date(), currentUserId, conversationPartnerId, currentUserName, conversationPartnerName);
 
-                new HttpRequestSendMessage().execute(jsonMessage);
+                    new HttpRequestSendMessage().execute(jsonMessage);
+                } else if(conversationType.equals(HomeActivity.CONVERSATION_TYPE_GROUP)){
+                    //create a new message object and send it to the server
+                    JSONGroupMessage jsonGroupMessage = new JSONGroupMessage(content, currentUserId, currentUserName, currentGroupId);
 
-//                arrayOfMessages.add(new Message(currentUserName, content));
-//                messageAdapter.notifyDataSetChanged();
+                    new HttpRequestSendGroupMessage().execute(jsonGroupMessage);
+                }
+
                 messageInput.setText("");
             }
         });
@@ -295,6 +334,76 @@ public class ConversationActivity extends AppCompatActivity {
                         .path("/message")
                         .queryParam("receiverId", params[0])
                         .queryParam("senderId", params[1])
+                        .build()
+                        .toUri()
+                        .toString();
+
+                RestTemplate restTemplate = new RestTemplate();
+                restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
+
+                return (List<LinkedHashMap>) restTemplate.getForObject(targetUrl, List.class);
+            } catch (Exception e) {
+                Log.e("MainActivity", e.getMessage(), e);
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(List<LinkedHashMap> messages) {
+            if(messages == null){
+                return;
+            }
+            Log.e("asd", messages.toString());
+            ArrayList<Message> arrayOfMessages = new ArrayList<Message>();
+
+            ListView messageList = (ListView) findViewById(R.id.messageListView);
+            MessageAdapter messageAdapter = new MessageAdapter(ConversationActivity.this, arrayOfMessages);
+
+            messageList.setAdapter(messageAdapter);
+
+            for(LinkedHashMap m: messages){
+                arrayOfMessages.add(new Message(m.get("senderName").toString(), currentUserName, m.get("text").toString()));
+            }
+
+            messageAdapter.notifyDataSetChanged();
+        }
+    }
+
+    private class HttpRequestSendGroupMessage extends AsyncTask<JSONGroupMessage, Void, String> {
+        @Override
+        protected String doInBackground(JSONGroupMessage... params) {
+            try {
+                final String url = "http://188.247.227.127:8080/groupMessage";
+                RestTemplate restTemplate = new RestTemplate();
+                restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
+
+                return restTemplate.postForObject(url, params[0], String.class);
+            } catch (Exception e) {
+                Log.e("MainActivity", e.getMessage(), e);
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String greeting) {
+            if(greeting == null){
+                return;
+            }
+            Log.e("asd", greeting);
+        }
+    }
+
+    private class HttpRequestGetGroupMessages extends AsyncTask<String, Void, List<LinkedHashMap>> {
+        @Override
+        protected List<LinkedHashMap> doInBackground(String... params) {
+            try {
+                final String url = "http://188.247.227.127:8080";
+
+                String targetUrl= UriComponentsBuilder.fromUriString(url)
+                        .path("/groupMessage")
+                        .queryParam("groupId", params[0])
                         .build()
                         .toUri()
                         .toString();
