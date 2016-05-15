@@ -374,7 +374,7 @@ public class ConversationActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(JSONMessage... params) {
             try {
-                final String url = "http://188.247.227.127:8080/message";
+                final String url = Constants.serverUrl + "/message";
                 RestTemplate restTemplate = new RestTemplate();
                 restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
 
@@ -399,7 +399,7 @@ public class ConversationActivity extends AppCompatActivity {
         @Override
         protected List<LinkedHashMap> doInBackground(String... params) {
             try {
-                final String url = "http://188.247.227.127:8080";
+                final String url = Constants.serverUrl;
 
                 String targetUrl = UriComponentsBuilder.fromUriString(url)
                         .path("/message")
@@ -445,7 +445,7 @@ public class ConversationActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(JSONGroupMessage... params) {
             try {
-                final String url = "http://188.247.227.127:8080/groupMessage";
+                final String url = Constants.serverUrl + "/groupMessage";
                 RestTemplate restTemplate = new RestTemplate();
                 restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
 
@@ -470,7 +470,7 @@ public class ConversationActivity extends AppCompatActivity {
         @Override
         protected List<LinkedHashMap> doInBackground(String... params) {
             try {
-                final String url = "http://188.247.227.127:8080";
+                final String url = Constants.serverUrl;
 
                 String targetUrl = UriComponentsBuilder.fromUriString(url)
                         .path("/groupMessage")
@@ -515,7 +515,7 @@ public class ConversationActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(String... params) {
             try {
-                final String url = "http://188.247.227.127:8080";
+                final String url = Constants.serverUrl;
 
                 String targetUrl = UriComponentsBuilder.fromUriString(url)
                         .path("/leaveGroup")

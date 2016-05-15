@@ -130,7 +130,7 @@ public class GroupAddActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(JSONNotification... params) {
             try {
-                final String url = "http://188.247.227.127:8080/notification";
+                final String url = Constants.serverUrl + "/notification";
                 RestTemplate restTemplate = new RestTemplate();
                 restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
 
@@ -156,7 +156,7 @@ public class GroupAddActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(JSONGroup... params) {
             try {
-                final String url = "http://188.247.227.127:8080/group";
+                final String url = Constants.serverUrl + "/group";
                 RestTemplate restTemplate = new RestTemplate();
                 restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
 

@@ -113,7 +113,7 @@ public class AddFriendsToGroupActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(String... params) {
             try {
-                final String url = "http://188.247.227.127:8080";
+                final String url = Constants.serverUrl;
 
                 String targetUrl= UriComponentsBuilder.fromUriString(url)
                         .path("/addFriendsToGroup")
@@ -157,7 +157,7 @@ public class AddFriendsToGroupActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(JSONNotification... params) {
             try {
-                final String url = "http://188.247.227.127:8080/notification";
+                final String url = Constants.serverUrl + "/notification";
                 RestTemplate restTemplate = new RestTemplate();
                 restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
 

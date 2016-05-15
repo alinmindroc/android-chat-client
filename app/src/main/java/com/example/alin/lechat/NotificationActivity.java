@@ -110,7 +110,7 @@ public class NotificationActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(Integer... params) {
             try {
-                final String url = "http://188.247.227.127:8080";
+                final String url = Constants.serverUrl;
 
                 String targetUrl = UriComponentsBuilder.fromUriString(url)
                         .path("/removeNotification")
@@ -135,7 +135,7 @@ public class NotificationActivity extends AppCompatActivity {
         @Override
         protected List<LinkedHashMap> doInBackground(String... params) {
             try {
-                final String url = "http://188.247.227.127:8080";
+                final String url = Constants.serverUrl;
 
                 String targetUrl = UriComponentsBuilder.fromUriString(url)
                         .path("/notification")
