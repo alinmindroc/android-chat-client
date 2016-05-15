@@ -249,8 +249,11 @@ public class ConversationActivity extends AppCompatActivity {
                 tvName.setText(message.messageText);
             } else {
                 convertView = lInflater.inflate(R.layout.message_list_entry_other, parent, false);
-                TextView tvName = (TextView) convertView.findViewById(R.id.messageTextOther);
-                tvName.setText(message.messageText);
+                TextView tvText = (TextView) convertView.findViewById(R.id.messageTextOther);
+                TextView tvUserName = (TextView) convertView.findViewById(R.id.usernameTextOther);
+
+                tvText.setText(message.messageText);
+                tvUserName.setText(message.senderName);
             }
 
             return convertView;
@@ -321,7 +324,7 @@ public class ConversationActivity extends AppCompatActivity {
             messageList.setAdapter(messageAdapter);
 
             for(LinkedHashMap m: messages){
-                arrayOfMessages.add(new Message(currentUserName, m.get("senderName").toString(), m.get("text").toString()));
+                arrayOfMessages.add(new Message(m.get("senderName").toString(), currentUserName, m.get("text").toString()));
             }
 
             messageAdapter.notifyDataSetChanged();
