@@ -47,7 +47,6 @@ public class ConversationActivity extends AppCompatActivity {
 
     String conversationType;
 
-    // Create the Handler object (on the main thread by default)
     final Handler handler = new Handler();
     Runnable runnablePrivateConversation = new Runnable() {
         @Override
@@ -147,12 +146,12 @@ public class ConversationActivity extends AppCompatActivity {
 
                 if(conversationType.equals(HomeActivity.CONVERSATION_TYPE_PRIVATE)){
                     //create a new message object and send it to the server
-                    JSONMessage jsonMessage = new JSONMessage(content, new Date(), currentUserId, conversationPartnerId, currentUserName, conversationPartnerName);
+                    JSONMessage jsonMessage = new JSONMessage(content, currentUserId, conversationPartnerId, currentUserName, conversationPartnerName, new Date());
 
                     new HttpRequestSendMessage().execute(jsonMessage);
                 } else if(conversationType.equals(HomeActivity.CONVERSATION_TYPE_GROUP)){
                     //create a new message object and send it to the server
-                    JSONGroupMessage jsonGroupMessage = new JSONGroupMessage(content, currentUserId, currentUserName, currentGroupId);
+                    JSONGroupMessage jsonGroupMessage = new JSONGroupMessage(content, currentUserId, currentUserName, currentGroupId, new Date());
 
                     new HttpRequestSendGroupMessage().execute(jsonGroupMessage);
                 }
@@ -240,14 +239,13 @@ public class ConversationActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.upload_file) {
             showFileChooser();
+            return true;
+        } else if (id == R.id.leave_group) {
+            new HttpRequestLeaveGroup().execute(currentGroupId, currentUserId);
             return true;
         }
 
@@ -437,6 +435,43 @@ public class ConversationActivity extends AppCompatActivity {
             }
 
             messageAdapter.notifyDataSetChanged();
+        }
+    }
+
+    private class HttpRequestLeaveGroup extends AsyncTask<String, Void, String> {
+        @Override
+        protected String doInBackground(String... params) {
+            try {
+                final String url = "http://188.247.227.127:8080";
+
+                String targetUrl= UriComponentsBuilder.fromUriString(url)
+                        .path("/leaveGroup")
+                        .queryParam("groupId", params[0])
+                        .queryParam("memberId", params[1])
+                        .build()
+                        .toUri()
+                        .toString();
+
+                RestTemplate restTemplate = new RestTemplate();
+                restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
+
+                return (String) restTemplate.getForObject(targetUrl, String.class);
+            } catch (Exception e) {
+                Log.e("MainActivity", e.getMessage(), e);
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String messages) {
+            if(messages == null){
+                return;
+            }
+            Log.e("asd", messages.toString());
+
+            //go to home activity after leaving group
+            ConversationActivity.this.finish();
         }
     }
 }

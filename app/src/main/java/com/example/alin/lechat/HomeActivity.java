@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.AsyncTask;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -53,12 +54,34 @@ public class HomeActivity extends AppCompatActivity {
     String currentUserId;
     String currentUserName;
 
+    final Handler handler = new Handler();
+    Runnable runnableUpdateGroups = new Runnable() {
+        @Override
+        public void run() {
+            // Do something here on the main thread
+            Log.d("Handlers", "Called on main thread");
+            new HttpRequestGetGroups().execute(getIntent().getStringExtra(LoginActivity.EXTRA_CURRENT_USER_ID));
+            // Repeat this the same runnable code block again another 2 seconds
+            handler.postDelayed(runnableUpdateGroups, 2000);
+        }
+    };
+
     @Override
     protected void onStart() {
         super.onStart();
-        //update group list only on onstart and not at a fixed interval because the groups can only be updated when adding one
-        //or when accepting an invitation in another activity
-        new HttpRequestGetGroups().execute(getIntent().getStringExtra(LoginActivity.EXTRA_CURRENT_USER_ID));
+        handler.post(runnableUpdateGroups);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        handler.removeCallbacks(runnableUpdateGroups);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        handler.removeCallbacks(runnableUpdateGroups);
     }
 
     @Override
