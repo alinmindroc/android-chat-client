@@ -27,8 +27,12 @@ import org.springframework.web.client.RestTemplate;
 import java.security.acl.Group;
 
 import JSON_objects.JSONGroup;
+import JSON_objects.JSONNotification;
 
 public class GroupAddActivity extends AppCompatActivity {
+
+    String currentUserId;
+    String currentUserName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,7 +40,8 @@ public class GroupAddActivity extends AppCompatActivity {
         setContentView(R.layout.activity_group_add);
 
         Intent intent = getIntent();
-        final String currentUserId = intent.getStringExtra(LoginActivity.EXTRA_CURRENT_USER_ID);
+        currentUserId = intent.getStringExtra(LoginActivity.EXTRA_CURRENT_USER_ID);
+        currentUserName = intent.getStringExtra(LoginActivity.EXTRA_CURRENT_USER_NAME);
 
         GraphRequestAsyncTask graphRequestAsyncTask = new GraphRequest(
                 AccessToken.getCurrentAccessToken(),
@@ -90,6 +95,7 @@ public class GroupAddActivity extends AppCompatActivity {
                                             try {
                                                 if(facebookFriends.getJSONObject(i).getString("name").equals(s.trim())){
                                                     memberIdsString = memberIdsString + (facebookFriends.getJSONObject(i).getString("id") + ":");
+                                                    sendGroupInvitation(facebookFriends.getJSONObject(i).getString("id"), groupName);
                                                 }
                                             } catch (JSONException e) {
                                                 e.printStackTrace();
@@ -109,6 +115,42 @@ public class GroupAddActivity extends AppCompatActivity {
                     }
                 }).executeAsync();
     }
+
+    private void sendGroupInvitation(String recipientId, String groupName){
+        JSONNotification jsonNotification = new JSONNotification();
+
+        jsonNotification.setAccepted("false");
+        jsonNotification.setContent(currentUserName + " has invited you to group " + groupName);
+        jsonNotification.setRecipientId(recipientId);
+
+        new HttpRequestAddNotification().execute(jsonNotification);
+    }
+
+    private class HttpRequestAddNotification extends AsyncTask<JSONNotification, Void, String> {
+        @Override
+        protected String doInBackground(JSONNotification... params) {
+            try {
+                final String url = "http://188.247.227.127:8080/notification";
+                RestTemplate restTemplate = new RestTemplate();
+                restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
+
+                return restTemplate.postForObject(url, params[0], String.class);
+            } catch (Exception e) {
+                Log.e("MainActivity", e.getMessage(), e);
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String greeting) {
+            if(greeting == null){
+                return;
+            }
+            Log.e("asd", greeting);
+        }
+    }
+
 
     private class HttpRequestAddGroup extends AsyncTask<JSONGroup, Void, String> {
         @Override

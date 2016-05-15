@@ -229,11 +229,10 @@ public class ConversationActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
+        getMenuInflater().inflate(R.menu.menu_conversation, menu);
         return true;
     }
 
@@ -253,17 +252,17 @@ public class ConversationActivity extends AppCompatActivity {
     }
 
     class MessageAdapter extends ArrayAdapter<Message> {
-        ArrayList<Message> users;
+        ArrayList<Message> messages;
         private final int CRT_USER_MESSAGE_TYPE = 1;
         private final int OTHER_USER_MESSAGE_TYPE = 0;
 
-        public MessageAdapter(Context context, ArrayList<Message> users) {
-            super(context, 0, users);
-            this.users = users;
+        public MessageAdapter(Context context, ArrayList<Message> messages) {
+            super(context, 0, messages);
+            this.messages = messages;
         }
 
         public int getItemViewType(int position) {
-            if(users.get(position).isCurrentUser()){
+            if(messages.get(position).isFromCurrentUser()){
                 return CRT_USER_MESSAGE_TYPE;
             } else {
                 return OTHER_USER_MESSAGE_TYPE;

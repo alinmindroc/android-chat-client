@@ -9,6 +9,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -31,9 +33,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-
-import JSON_objects.JSONGroup;
 
 public class HomeActivity extends AppCompatActivity {
 
@@ -88,7 +87,6 @@ public class HomeActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
-        getSupportActionBar().hide();
 
         final ListView friendList = (ListView) findViewById(R.id.friendList);
 
@@ -248,6 +246,26 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_home, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        if (id == R.id.notifications) {
+            Intent intent = new Intent(HomeActivity.this, NotificationActivity.class);
+            intent.putExtra(LoginActivity.EXTRA_CURRENT_USER_ID, currentUserId);
+            startActivity(intent);
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
 
     private class HttpRequestGetGroups extends AsyncTask<String, Void, List<LinkedHashMap>> {
         @Override
@@ -302,7 +320,8 @@ public class HomeActivity extends AppCompatActivity {
                     if (position == 0) {
                         //start add group activity
                         Intent intent = new Intent(view.getContext(), GroupAddActivity.class);
-                        intent.putExtra(LoginActivity.EXTRA_CURRENT_USER_ID, getIntent().getStringExtra(LoginActivity.EXTRA_CURRENT_USER_ID));
+                        intent.putExtra(LoginActivity.EXTRA_CURRENT_USER_ID, currentUserId);
+                        intent.putExtra(LoginActivity.EXTRA_CURRENT_USER_NAME, currentUserName);
 
                         startActivity(intent);
                     } else {

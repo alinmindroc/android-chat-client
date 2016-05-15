@@ -11,7 +11,7 @@ class Message {
         this.senderName = senderName;
     }
 
-    public boolean isCurrentUser(){
+    public boolean isFromCurrentUser(){
         return userName.equals(senderName);
     }
 }
