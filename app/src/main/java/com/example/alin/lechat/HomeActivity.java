@@ -3,6 +3,7 @@ package com.example.alin.lechat;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -22,8 +23,16 @@ import com.facebook.HttpMethod;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import JSON_objects.JSONGroup;
 
 public class HomeActivity extends AppCompatActivity {
 
@@ -40,13 +49,20 @@ public class HomeActivity extends AppCompatActivity {
     public static final String CONVERSATION_TYPE_GROUP = "group_conversation";
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        //update group list only on onstart and not at a fixed interval because the groups can only be updated when adding one
+        //or when accepting an invitation in another activity
+        new HttpRequestGetGroups().execute(getIntent().getStringExtra(LoginActivity.EXTRA_CURRENT_USER_ID));
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
         getSupportActionBar().hide();
 
         final ListView friendList = (ListView) findViewById(R.id.friendList);
-        ListView groupList = (ListView) findViewById(R.id.groupList);
 
         Intent intent = getIntent();
         final String currentUserId = intent.getStringExtra(LoginActivity.EXTRA_CURRENT_USER_ID);
@@ -106,76 +122,6 @@ public class HomeActivity extends AppCompatActivity {
                         }
                     }
                 }).executeAsync();
-
-
-
-        Log.e("current user id", currentUserId);
-
-        //add users
-
-
-        //set groups
-        final ArrayList<Group> arrayOfGroups = new ArrayList<Group>();
-        // Create the adapter to convert the array to views
-
-        arrayOfGroups.add(new Group("Group 1"));
-        arrayOfGroups.add(new Group("Group 2"));
-        arrayOfGroups.add(new Group("Android"));
-        arrayOfGroups.add(new Group("Facebook"));
-        arrayOfGroups.add(new Group("Facultate"));
-        arrayOfGroups.add(new Group("Idp"));
-
-        GroupsAdapter groupsAdapter = new GroupsAdapter(this, arrayOfGroups);
-        // Attach the adapter to a ListView
-        groupList.setAdapter(groupsAdapter);
-
-
-        //add groups and friends
-        arrayOfGroups.add(0, new Group(ADD_GROUP_LIST_ENTRY));
-
-
-
-        groupList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if (position == 0) {
-                    //start add group activity
-                    Intent intent = new Intent(view.getContext(), GroupAddActivity.class);
-                    intent.putExtra(LoginActivity.EXTRA_CURRENT_USER_ID, currentUserId);
-
-                    startActivity(intent);
-                } else {
-                    //go to group conversation
-                    Intent intent = new Intent(view.getContext(), ConversationActivity.class);
-
-                    intent.putExtra(EXTRA_CONVERSATION_TYPE, CONVERSATION_TYPE_GROUP);
-                    intent.putExtra(EXTRA_GROUP_NAME, arrayOfGroups.get(position).name);
-                    startActivity(intent);
-                }
-            }
-        });
-
-//        GraphRequest request = GraphRequest.newMeRequest(
-//                AccessToken.getCurrentAccessToken(),
-//                new GraphRequest.GraphJSONObjectCallback() {
-//                    @Override
-//                    public void onCompleted(
-//                            JSONObject object,
-//                            GraphResponse response) {
-//                        try {
-//                            String name = object.getString("name");
-//                            Log.e("name", object.toString());
-//                        } catch (JSONException e) {
-//                            e.printStackTrace();
-//                        }
-//                    }
-//                });
-//
-//        Bundle parameters = new Bundle();
-//        parameters.putString("fields", "id,name");
-//        request.setParameters(parameters);
-//        request.executeAsync();
-
     }
 
     class UsersAdapter extends ArrayAdapter<FacebookUser> {
@@ -269,6 +215,76 @@ public class HomeActivity extends AppCompatActivity {
             }
 
             return convertView;
+        }
+    }
+
+
+    private class HttpRequestGetGroups extends AsyncTask<String, Void, List<LinkedHashMap>> {
+        @Override
+        protected List<LinkedHashMap> doInBackground(String... params) {
+            try {
+                final String url = "http://188.247.227.127:8080";
+
+                String targetUrl= UriComponentsBuilder.fromUriString(url)
+                        .path("/group")
+                        .queryParam("memberId", params[0])
+                        .build()
+                        .toUri()
+                        .toString();
+
+                RestTemplate restTemplate = new RestTemplate();
+                restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
+
+                return (List<LinkedHashMap>) restTemplate.getForObject(targetUrl, List.class);
+            } catch (Exception e) {
+                Log.e("MainActivity", e.getMessage(), e);
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(List<LinkedHashMap> groups) {
+            if(groups == null){
+                return;
+            }
+            Log.e("asd", groups.toString());
+
+            ListView groupList = (ListView) findViewById(R.id.groupList);
+
+            final ArrayList<Group> arrayOfGroups = new ArrayList<Group>();
+            // Create the adapter to convert the array to views
+
+            for(LinkedHashMap g : groups){
+                arrayOfGroups.add(new Group(g.get("name").toString()));
+            }
+
+            GroupsAdapter groupsAdapter = new GroupsAdapter(HomeActivity.this, arrayOfGroups);
+            // Attach the adapter to a ListView
+            groupList.setAdapter(groupsAdapter);
+
+            //add groups and friends
+            arrayOfGroups.add(0, new Group(ADD_GROUP_LIST_ENTRY));
+
+            groupList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    if (position == 0) {
+                        //start add group activity
+                        Intent intent = new Intent(view.getContext(), GroupAddActivity.class);
+                        intent.putExtra(LoginActivity.EXTRA_CURRENT_USER_ID, getIntent().getStringExtra(LoginActivity.EXTRA_CURRENT_USER_ID));
+
+                        startActivity(intent);
+                    } else {
+                        //go to group conversation
+                        Intent intent = new Intent(view.getContext(), ConversationActivity.class);
+
+                        intent.putExtra(EXTRA_CONVERSATION_TYPE, CONVERSATION_TYPE_GROUP);
+                        intent.putExtra(EXTRA_GROUP_NAME, arrayOfGroups.get(position).name);
+                        startActivity(intent);
+                    }
+                }
+            });
         }
     }
 }

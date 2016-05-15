@@ -327,5 +327,4 @@ public class ConversationActivity extends AppCompatActivity {
             messageAdapter.notifyDataSetChanged();
         }
     }
-
 }
