@@ -3,7 +3,6 @@ package com.example.alin.lechat;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Handler;
@@ -22,12 +21,6 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.facebook.AccessToken;
-import com.facebook.GraphRequest;
-import com.facebook.GraphRequestAsyncTask;
-import com.facebook.GraphResponse;
-import com.facebook.HttpMethod;
-
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -37,6 +30,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
+
+import JSON_objects.JSONMessage;
 
 public class ConversationActivity extends AppCompatActivity {
 
@@ -57,6 +52,27 @@ public class ConversationActivity extends AppCompatActivity {
             handler.postDelayed(runnableCode, 2000);
         }
     };
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        // Start the initial runnable task by posting through the handler
+        // Don't use the onCreate method, because we want to remove the handler even when the application is paused (minimized)
+        handler.post(runnableCode);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        handler.removeCallbacks(runnableCode);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        handler.removeCallbacks(runnableCode);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,7 +100,7 @@ public class ConversationActivity extends AppCompatActivity {
 
         messageList.setAdapter(messageAdapter);
 
-        final EditText messageInput = (EditText) findViewById(R.id.messageEditText);
+        final EditText messageInput = (EditText) findViewById(R.id.groupNameEditText);
 
         Button sendButton = (Button) findViewById(R.id.messageSendButton);
         sendButton.setOnClickListener(new View.OnClickListener() {
@@ -105,11 +121,6 @@ public class ConversationActivity extends AppCompatActivity {
                 messageInput.setText("");
             }
         });
-
-        // Start the initial runnable task by posting through the handler
-        handler.post(runnableCode);
-
-//        new HttpRequestGetMessages().execute(currentUserId, conversationPartnerId);
     }
 
     private final int FILE_SELECT_CODE = 0;
@@ -161,7 +172,7 @@ public class ConversationActivity extends AppCompatActivity {
                     Uri uri = data.getData();
                     Log.d("URI", "File Uri: " + uri.toString());
 
-                    final EditText messageEditText = (EditText)findViewById(R.id.messageEditText);
+                    final EditText messageEditText = (EditText)findViewById(R.id.groupNameEditText);
                     messageEditText.setText(uri.getLastPathSegment().toString());
                     // Get the path
                     String path = null;
@@ -246,16 +257,15 @@ public class ConversationActivity extends AppCompatActivity {
         }
     }
 
-
-    private class HttpRequestSendMessage extends AsyncTask<JSONMessage, Void, JSONMessage> {
+    private class HttpRequestSendMessage extends AsyncTask<JSONMessage, Void, String> {
         @Override
-        protected JSONMessage doInBackground(JSONMessage... params) {
+        protected String doInBackground(JSONMessage... params) {
             try {
                 final String url = "http://188.247.227.127:8080/message";
                 RestTemplate restTemplate = new RestTemplate();
                 restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
 
-                return restTemplate.postForObject(url, params[0], JSONMessage.class);
+                return restTemplate.postForObject(url, params[0], String.class);
             } catch (Exception e) {
                 Log.e("MainActivity", e.getMessage(), e);
             }
@@ -264,11 +274,11 @@ public class ConversationActivity extends AppCompatActivity {
         }
 
         @Override
-        protected void onPostExecute(JSONMessage greeting) {
+        protected void onPostExecute(String greeting) {
             if(greeting == null){
                 return;
             }
-            Log.e("asd", greeting.toString());
+            Log.e("asd", greeting);
         }
     }
 

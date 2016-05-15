@@ -1,4 +1,4 @@
-package com.example.alin.lechat;
+package JSON_objects;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

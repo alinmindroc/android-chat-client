@@ -22,7 +22,6 @@ import com.facebook.HttpMethod;
 
 import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.util.ArrayList;
 
@@ -53,6 +52,7 @@ public class HomeActivity extends AppCompatActivity {
         final String currentUserId = intent.getStringExtra(LoginActivity.EXTRA_CURRENT_USER_ID);
         final String currentUserName = intent.getStringExtra(LoginActivity.EXTRA_CURRENT_USER_NAME);
 
+        //set friends list
         GraphRequestAsyncTask graphRequestAsyncTask = new GraphRequest(
                 AccessToken.getCurrentAccessToken(),
                 "/me/friends",
@@ -63,16 +63,16 @@ public class HomeActivity extends AppCompatActivity {
                         try {
                             final JSONArray friends = response.getJSONObject().getJSONArray("data");
 
-                            final ArrayList<User> arrayOfUsers = new ArrayList();
+                            final ArrayList<FacebookUser> arrayOfUsers = new ArrayList();
                             // Create the adapter to convert the array to views
 
                             UsersAdapter friendsAdapter = new UsersAdapter(HomeActivity.this, arrayOfUsers);
                             // Attach the adapter to a ListView
                             friendList.setAdapter(friendsAdapter);
-                            arrayOfUsers.add(0, new User(ADD_FRIEND_LIST_ENTRY));
+                            arrayOfUsers.add(0, new FacebookUser(ADD_FRIEND_LIST_ENTRY));
 
                             for(int i=0; i<friends.length(); i++) {
-                                arrayOfUsers.add(new User(friends.getJSONObject(i).getString("name")));
+                                arrayOfUsers.add(new FacebookUser(friends.getJSONObject(i).getString("name")));
                             }
 
                             //add logic for opening conversations
@@ -114,7 +114,7 @@ public class HomeActivity extends AppCompatActivity {
         //add users
 
 
-        //add groups
+        //set groups
         final ArrayList<Group> arrayOfGroups = new ArrayList<Group>();
         // Create the adapter to convert the array to views
 
@@ -141,6 +141,8 @@ public class HomeActivity extends AppCompatActivity {
                 if (position == 0) {
                     //start add group activity
                     Intent intent = new Intent(view.getContext(), GroupAddActivity.class);
+                    intent.putExtra(LoginActivity.EXTRA_CURRENT_USER_ID, currentUserId);
+
                     startActivity(intent);
                 } else {
                     //go to group conversation
@@ -176,20 +178,12 @@ public class HomeActivity extends AppCompatActivity {
 
     }
 
-    class User {
-        public String name;
-
-        public User(String name) {
-            this.name = name;
-        }
-    }
-
-    class UsersAdapter extends ArrayAdapter<User> {
+    class UsersAdapter extends ArrayAdapter<FacebookUser> {
         int dataSize;
         private final int FIRST_POSITION_VIEW_TYPE = 1;
         private final int NON_FIRST_POSITION_VIEW_TYPE = 0;
 
-        public UsersAdapter(Context context, ArrayList<User> users) {
+        public UsersAdapter(Context context, ArrayList<FacebookUser> users) {
             super(context, 0, users);
             this.dataSize = users.size();
         }
@@ -207,7 +201,7 @@ public class HomeActivity extends AppCompatActivity {
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-            User user = getItem(position);
+            FacebookUser user = getItem(position);
 
             LayoutInflater lInflater = LayoutInflater.from(getContext());
             if (getItemViewType(position) == FIRST_POSITION_VIEW_TYPE) {
