@@ -21,6 +21,13 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.facebook.CallbackManager;
+import com.facebook.FacebookCallback;
+import com.facebook.FacebookException;
+import com.facebook.share.Sharer;
+import com.facebook.share.model.ShareLinkContent;
+import com.facebook.share.widget.ShareDialog;
+
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -75,9 +82,9 @@ public class ConversationActivity extends AppCompatActivity {
         super.onStart();
 
         // Don't use the onCreate method, because we want to remove the handler even when the application is paused (minimized)
-        if(conversationType.equals(HomeActivity.CONVERSATION_TYPE_PRIVATE)) {
+        if (conversationType.equals(HomeActivity.CONVERSATION_TYPE_PRIVATE)) {
             handler.post(runnablePrivateConversation);
-        } else if(conversationType.equals(HomeActivity.CONVERSATION_TYPE_GROUP)){
+        } else if (conversationType.equals(HomeActivity.CONVERSATION_TYPE_GROUP)) {
             handler.post(runnableGroupConversation);
         }
     }
@@ -87,9 +94,9 @@ public class ConversationActivity extends AppCompatActivity {
         super.onStop();
 
         // Don't use the onCreate method, because we want to remove the handler even when the application is paused (minimized)
-        if(conversationType.equals(HomeActivity.CONVERSATION_TYPE_PRIVATE)) {
+        if (conversationType.equals(HomeActivity.CONVERSATION_TYPE_PRIVATE)) {
             handler.removeCallbacks(runnablePrivateConversation);
-        } else if(conversationType.equals(HomeActivity.CONVERSATION_TYPE_GROUP)){
+        } else if (conversationType.equals(HomeActivity.CONVERSATION_TYPE_GROUP)) {
             handler.removeCallbacks(runnableGroupConversation);
         }
     }
@@ -99,9 +106,9 @@ public class ConversationActivity extends AppCompatActivity {
         super.onPause();
 
         // Don't use the onCreate method, because we want to remove the handler even when the application is paused (minimized)
-        if(conversationType.equals(HomeActivity.CONVERSATION_TYPE_PRIVATE)) {
+        if (conversationType.equals(HomeActivity.CONVERSATION_TYPE_PRIVATE)) {
             handler.removeCallbacks(runnablePrivateConversation);
-        } else if(conversationType.equals(HomeActivity.CONVERSATION_TYPE_GROUP)){
+        } else if (conversationType.equals(HomeActivity.CONVERSATION_TYPE_GROUP)) {
             handler.removeCallbacks(runnableGroupConversation);
         }
     }
@@ -116,11 +123,11 @@ public class ConversationActivity extends AppCompatActivity {
         currentUserName = intent.getStringExtra(LoginActivity.EXTRA_CURRENT_USER_NAME);
         currentUserId = intent.getStringExtra(LoginActivity.EXTRA_CURRENT_USER_ID);
 
-        if(conversationType.equals(HomeActivity.CONVERSATION_TYPE_PRIVATE)){
+        if (conversationType.equals(HomeActivity.CONVERSATION_TYPE_PRIVATE)) {
             conversationPartnerName = intent.getStringExtra(HomeActivity.EXTRA_FRIEND_NAME);
             conversationPartnerId = intent.getStringExtra(HomeActivity.EXTRA_FRIEND_ID);
             getSupportActionBar().setTitle(conversationPartnerName);
-        } else if(conversationType.equals(HomeActivity.CONVERSATION_TYPE_GROUP)){
+        } else if (conversationType.equals(HomeActivity.CONVERSATION_TYPE_GROUP)) {
             currentGroupId = intent.getStringExtra(HomeActivity.EXTRA_GROUP_ID);
             currentGroupName = intent.getStringExtra(HomeActivity.EXTRA_GROUP_NAME);
             getSupportActionBar().setTitle(currentGroupName);
@@ -144,12 +151,12 @@ public class ConversationActivity extends AppCompatActivity {
                     return;
                 }
 
-                if(conversationType.equals(HomeActivity.CONVERSATION_TYPE_PRIVATE)){
+                if (conversationType.equals(HomeActivity.CONVERSATION_TYPE_PRIVATE)) {
                     //create a new message object and send it to the server
                     JSONMessage jsonMessage = new JSONMessage(content, currentUserId, conversationPartnerId, currentUserName, conversationPartnerName, new Date());
 
                     new HttpRequestSendMessage().execute(jsonMessage);
-                } else if(conversationType.equals(HomeActivity.CONVERSATION_TYPE_GROUP)){
+                } else if (conversationType.equals(HomeActivity.CONVERSATION_TYPE_GROUP)) {
                     //create a new message object and send it to the server
                     JSONGroupMessage jsonGroupMessage = new JSONGroupMessage(content, currentUserId, currentUserName, currentGroupId, new Date());
 
@@ -181,7 +188,7 @@ public class ConversationActivity extends AppCompatActivity {
 
     public static String getPath(Context context, Uri uri) throws URISyntaxException {
         if ("content".equalsIgnoreCase(uri.getScheme())) {
-            String[] projection = { "_data" };
+            String[] projection = {"_data"};
             Cursor cursor = null;
 
             try {
@@ -193,8 +200,7 @@ public class ConversationActivity extends AppCompatActivity {
             } catch (Exception e) {
                 // Eat it
             }
-        }
-        else if ("file".equalsIgnoreCase(uri.getScheme())) {
+        } else if ("file".equalsIgnoreCase(uri.getScheme())) {
             return uri.getPath();
         }
 
@@ -210,7 +216,7 @@ public class ConversationActivity extends AppCompatActivity {
                     Uri uri = data.getData();
                     Log.d("URI", "File Uri: " + uri.toString());
 
-                    final EditText messageEditText = (EditText)findViewById(R.id.groupNameEditText);
+                    final EditText messageEditText = (EditText) findViewById(R.id.groupNameEditText);
                     messageEditText.setText(uri.getLastPathSegment().toString());
                     // Get the path
                     String path = null;
@@ -231,8 +237,11 @@ public class ConversationActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_conversation, menu);
+        if (conversationType.equals(HomeActivity.CONVERSATION_TYPE_PRIVATE)) {
+            getMenuInflater().inflate(R.menu.menu_private_conversation, menu);
+        } else if (conversationType.equals(HomeActivity.CONVERSATION_TYPE_GROUP)) {
+            getMenuInflater().inflate(R.menu.menu_group_conversation, menu);
+        }
         return true;
     }
 
@@ -246,6 +255,71 @@ public class ConversationActivity extends AppCompatActivity {
         } else if (id == R.id.leave_group) {
             new HttpRequestLeaveGroup().execute(currentGroupId, currentUserId);
             return true;
+        } else if (id == R.id.add_friends) {
+            Intent intent = new Intent(ConversationActivity.this, AddFriendsToGroupActivity.class);
+
+            intent.putExtra(LoginActivity.EXTRA_CURRENT_USER_NAME, currentUserName);
+            intent.putExtra(LoginActivity.EXTRA_CURRENT_USER_ID, currentUserId);
+            intent.putExtra(HomeActivity.EXTRA_GROUP_ID, currentGroupId);
+            intent.putExtra(HomeActivity.EXTRA_GROUP_NAME, currentGroupName);
+
+            startActivity(intent);
+        } else if (id == R.id.share_group) {
+            //facebook group conversation sharing
+            final ShareDialog shareDialog = new ShareDialog(this);
+            CallbackManager callbackManager = CallbackManager.Factory.create();
+            shareDialog.registerCallback(callbackManager, new
+
+                    FacebookCallback<Sharer.Result>() {
+                        @Override
+                        public void onSuccess(Sharer.Result result) {
+                        }
+
+                        @Override
+                        public void onCancel() {
+                        }
+
+                        @Override
+                        public void onError(FacebookException error) {
+                        }
+                    });
+
+            if (ShareDialog.canShow(ShareLinkContent.class)) {
+                ShareLinkContent linkContent = new ShareLinkContent.Builder()
+                        .setContentTitle("Group conversation")
+                        .setContentUrl(Uri.parse(Constants.serverUrl + "/prettyGroupConversation?groupId=" + currentGroupId))
+                        .build();
+
+                shareDialog.show(linkContent);
+            }
+        } else if (id == R.id.share_private) {
+            //facebook private conversation sharing
+            final ShareDialog shareDialog = new ShareDialog(this);
+            CallbackManager callbackManager = CallbackManager.Factory.create();
+            shareDialog.registerCallback(callbackManager, new
+
+                    FacebookCallback<Sharer.Result>() {
+                        @Override
+                        public void onSuccess(Sharer.Result result) {
+                        }
+
+                        @Override
+                        public void onCancel() {
+                        }
+
+                        @Override
+                        public void onError(FacebookException error) {
+                        }
+                    });
+
+            if (ShareDialog.canShow(ShareLinkContent.class)) {
+                ShareLinkContent linkContent = new ShareLinkContent.Builder()
+                        .setContentTitle("Conversation with " + conversationPartnerName)
+                        .setContentUrl(Uri.parse(Constants.serverUrl + "/prettyConversation?receiverId=" + currentUserId + "&senderId=" + conversationPartnerId))
+                        .build();
+
+                shareDialog.show(linkContent);
+            }
         }
 
         return super.onOptionsItemSelected(item);
@@ -262,7 +336,7 @@ public class ConversationActivity extends AppCompatActivity {
         }
 
         public int getItemViewType(int position) {
-            if(messages.get(position).isFromCurrentUser()){
+            if (messages.get(position).isFromCurrentUser()) {
                 return CRT_USER_MESSAGE_TYPE;
             } else {
                 return OTHER_USER_MESSAGE_TYPE;
@@ -314,7 +388,7 @@ public class ConversationActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(String greeting) {
-            if(greeting == null){
+            if (greeting == null) {
                 return;
             }
             Log.e("asd", greeting);
@@ -327,7 +401,7 @@ public class ConversationActivity extends AppCompatActivity {
             try {
                 final String url = "http://188.247.227.127:8080";
 
-                String targetUrl= UriComponentsBuilder.fromUriString(url)
+                String targetUrl = UriComponentsBuilder.fromUriString(url)
                         .path("/message")
                         .queryParam("receiverId", params[0])
                         .queryParam("senderId", params[1])
@@ -348,7 +422,7 @@ public class ConversationActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(List<LinkedHashMap> messages) {
-            if(messages == null){
+            if (messages == null) {
                 return;
             }
             Log.e("asd", messages.toString());
@@ -359,7 +433,7 @@ public class ConversationActivity extends AppCompatActivity {
 
             messageList.setAdapter(messageAdapter);
 
-            for(LinkedHashMap m: messages){
+            for (LinkedHashMap m : messages) {
                 arrayOfMessages.add(new Message(m.get("senderName").toString(), currentUserName, m.get("text").toString()));
             }
 
@@ -385,7 +459,7 @@ public class ConversationActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(String greeting) {
-            if(greeting == null){
+            if (greeting == null) {
                 return;
             }
             Log.e("asd", greeting);
@@ -398,7 +472,7 @@ public class ConversationActivity extends AppCompatActivity {
             try {
                 final String url = "http://188.247.227.127:8080";
 
-                String targetUrl= UriComponentsBuilder.fromUriString(url)
+                String targetUrl = UriComponentsBuilder.fromUriString(url)
                         .path("/groupMessage")
                         .queryParam("groupId", params[0])
                         .build()
@@ -418,7 +492,7 @@ public class ConversationActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(List<LinkedHashMap> messages) {
-            if(messages == null){
+            if (messages == null) {
                 return;
             }
             Log.e("asd", messages.toString());
@@ -429,7 +503,7 @@ public class ConversationActivity extends AppCompatActivity {
 
             messageList.setAdapter(messageAdapter);
 
-            for(LinkedHashMap m: messages){
+            for (LinkedHashMap m : messages) {
                 arrayOfMessages.add(new Message(m.get("senderName").toString(), currentUserName, m.get("text").toString()));
             }
 
@@ -443,7 +517,7 @@ public class ConversationActivity extends AppCompatActivity {
             try {
                 final String url = "http://188.247.227.127:8080";
 
-                String targetUrl= UriComponentsBuilder.fromUriString(url)
+                String targetUrl = UriComponentsBuilder.fromUriString(url)
                         .path("/leaveGroup")
                         .queryParam("groupId", params[0])
                         .queryParam("memberId", params[1])
@@ -464,7 +538,7 @@ public class ConversationActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(String messages) {
-            if(messages == null){
+            if (messages == null) {
                 return;
             }
             Log.e("asd", messages.toString());

@@ -12,4 +12,14 @@
         android:orderInCategory="100"
         android:title="@string/leave_group"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/add_friends"
+        android:orderInCategory="100"
+        android:title="@string/add_friends"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/share_group"
+        android:orderInCategory="100"
+        android:title="@string/share_conversation"
+        app:showAsAction="never" />
 </menu>

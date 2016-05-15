@@ -1,0 +1,15 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.example.alin.lechat.ConversationActivity">
+    <item
+        android:id="@+id/upload_file"
+        android:orderInCategory="100"
+        android:title="@string/upload_file"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/share_private"
+        android:orderInCategory="100"
+        android:title="@string/share_conversation"
+        app:showAsAction="never" />
+</menu>
