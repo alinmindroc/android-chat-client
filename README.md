@@ -1,19 +1,13 @@
 # LeChat #
 
-This is an Android chat app. It currently has only the GUI defined.
+This is an Android chat app. Uses facebook integration. 
 
 Build instructions:
 
 * This is an Android Studio project.  
 * You should clone the repository, then import the project in Android studio and run it either in an emulator or on a physical device.  
 
-todo: in group add, set custom listener for friend id instead of name
-de pus adresa serverului + numele stringurilor de intenturi in constants
-de scos campul date din mesaje
-
-am facut autocomplete cu lista de prieteni
-se pot trimite mesaje individuale si de grup
-se pot adauga grupuri
-se sterg atele mai vechi de o luna din DB
-se logheaza, se preia lista de prieteni de pe wall
-am folosit dependency injection, java beans
+Features:
+-you can send private and group messages
+-when you add a user to your friend list, you can use an autocomplete input
+-messages older than a month are automatically deleted from the database
